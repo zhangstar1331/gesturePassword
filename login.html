@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+  <title></title>
+  <script src="http://static.wanlianjin.com/data/m/wlcs/js/nocar/jquery-1.7.2.min.js" type="text/javascript" charset="utf-8"></script>
+	<script src="http://static.wanlianjin.com/data/m/wlcs/js/nocar/rem.js" type="text/javascript" charset="utf-8"></script>
+	<style type="text/css">
+		*{
+			margin: 0;
+			padding: 0;
+			-webkit-touch-callout:none;
+			-webkit-user-select:none;
+			-khtml-user-select:none;
+			-moz-user-select:none;
+			-ms-user-select:none;
+			user-select:none;
+		}
+		body,html{
+			font-size: 0.36rem;
+			font-family: "微软雅黑";
+			text-align: center;
+			-webkit-tap-highlight-color: rgba(255, 255, 255, 0);
+		}
+		#phoneNum{
+			font-size: 0.36rem;
+			margin: .5rem 0 0 0;
+			visibility: hidden;
+		}
+		#gesturepwd{width: 5.6rem;height: 5.6rem;margin: 0 auto;position: absolute;top: 3rem;left: .4rem;}
+		.tishi{
+			color: #f26229;
+			font-size: 0.3rem;
+		}
+		.pan{
+			width: 1.25rem;
+			height: 1.25rem;
+			padding: 1%;
+			box-sizing: border-box;
+			margin: 0 auto;
+		}
+		.pan div{
+			width: 20%;
+			height: 20%;
+			float: left;
+			border-radius: 1000px;
+			border: 1px solid #FFA200;
+			box-sizing: border-box;
+			margin: 6%;
+		}
+		.addBg{
+			background: #FFA200;
+		}
+		.mask{
+			position: fixed;
+			top: 0;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			background: rgba(0,0,0,0.7);
+			color: #fff;
+			display: none;
+		}
+		#maskTime{
+			margin-top: 5rem;
+			display: inline-block;
+		}
+		.normal{color: #666;}
+	</style>
+</head>
+<body>
+	
+	<div id="phoneNum">180****1234</div>
+	<!--小密码框-->	
+	<div class="pan">
+		<div></div>
+		<div></div>
+		<div></div>
+		<div></div>
+		<div></div>
+		<div></div>
+		<div></div>
+		<div></div>
+		<div></div>
+	</div>
+	<!--提示-->
+	<div id="tishi" class="tishi normal">设置手势密码</div>
+	<!--密码绘制区域-->
+	<div id="gesturepwd"></div>
+	<!--遮罩-->
+	<div class="mask">
+		<span id="maskTime"></span>
+	</div>
+</body>
+
+<script src="js/jquery.gesture.password.js"></script>
+
+<script type="text/javascript">
+	//设置区域的尺寸
+	var w = $("#gesturepwd").width();
+	var h = $("#gesturepwd").height();
+	var rr = w/6*0.6;
+	var pr = w/6*0.2;
+	var jg = w/3*0.4;
+	//密码绘制区域样式设置
+  	$("#gesturepwd").GesturePasswd({
+		backgroundColor:"#ffffff",  //背景色
+		color:"#ffa200",   //主要的控件颜色
+		roundRadii:rr,    //大圆点的半径
+		pointRadii:pr, //大圆点被选中时显示的圆心的半径
+		space:jg,  //大圆点之间的间隙
+		width:w,   //整个组件的宽度
+		height:h,  //整个组件的高度
+		lineColor:"#ffa200",   //用户划出线条的颜色
+		zindex :100  //整个组件的css z-index属性
+	});
+	var flag = 0;
+	var isWd = localStorage.getItem('success') ? true : false; //记录密码是否设置成功的状态 false表示未设置成功  
+	var num = 5; //密码设置成功之后，再次进来输入的限制次数
+	var pwd = ""; //记录密码
+	var isbol = false;
+	var pwd1='',pwd2=''; //记录首次和接下来的密码
+	var timer;
+	if(isWd){
+		 $("#tishi").text("请绘制手势密码").addClass('normal');
+	}else{
+		 $("#tishi").text("首次登录，请设置手势密码").addClass('normal');
+	}
+	if(localStorage.endTime){
+		timer = setInterval(function(){ShowCountDown('maskTime');}, 1000); 
+		$(".mask").show();
+	}
+  	$("#gesturepwd").on("hasPasswd",function(e,passwd){  //passwd记录连接的结果
+	    var result;
+	    pwd = passwd;
+   		if(pwd.length>1){
+   			//根据下面的绘制渲染密码小框
+   			var arr=[];
+			arr = pwd.split("");
+			$(".pan div").removeClass('addBg');
+			for(var i=0;i<arr.length;i++){
+				$(".pan div").eq(arr[i]-1).addClass('addBg');
+			}
+    		if(isWd){
+    			pwd1 = localStorage.getItem('pwd')
+		    	if(passwd == pwd1){
+				    result=true;
+				}else {
+				    result=false;
+				}
+			    if(result == true){
+			        $("#gesturepwd").trigger("passwdRight");
+			        setTimeout(function(){
+			        	//密码验证正确后的其他操作，打开新的页面等。。。
+			        	alert("密码正确！")
+			      	},500);  //延迟半秒以照顾视觉效果
+			    }else{
+			    	num--;
+			      	$("#gesturepwd").trigger("passwdWrong");
+			      	//密码验证错误后的其他操作。。。
+			      	$("#tishi").text("密码输入错误，您还可以输入"+num+"次").removeClass('normal');
+			      	if(num==0){
+			      		$("#tishi").text("绘制手势密码").addClass('normal');
+			      		$(".mask").show();
+			      		var endTime = (new Date()).getTime()+3600000;
+			      		localStorage.endTime = endTime;
+						timer = setInterval(function(){ShowCountDown('maskTime');}, 1000); 
+			      	}
+			    }
+    		}else{
+	    		if(passwd.length<4){
+			    	$("#gesturepwd").trigger("passwdAgain");
+				    	$("#tishi").text("请连接至少四个点").removeClass('normal');
+			    }else{
+			    	if(pwd1==''){
+			    		//如果是第一次输入，存下结果
+			    		pwd1 = pwd;
+			    		$("#tishi").text("请再次输入");
+			    	}else{
+			    		//如果不是第一次输入，存下结果
+			    		pwd2 = pwd;
+			    		if(pwd1 == pwd2){ //两次密码输入一致跳转页面
+			    			$("#tishi").text("设置密码成功").addClass('normal');
+			    			$(".pan div").removeClass('addBg');
+			    			isWd = true;
+			    			localStorage.setItem('success',isWd);
+			    			localStorage.setItem('pwd',pwd2);
+			    			window.location.href="index.html"
+			    		}else{
+			    			$("#tishi").text("两次输入不一，请重新输入").removeClass('normal');
+			    			pwd1='';
+			    			pwd2='';
+			    		}
+		    		}
+		    		//清除以前绘制的密码痕迹
+		    		$("#gesturepwd").trigger("passwdAgain");	
+		    	}
+    		}
+   		}else{
+   			//绘制长度不足两个则自动清除
+   			$("#gesturepwd").trigger("passwdWrong");
+   		}
+ 
+  	});
+  	
+ $('body').bind('touchstart',function(e){
+ 		//取消默认事件
+ 		e.preventDefault()
+ })
+ //密码设置成功之后，输入密码超过五次，则在接下来的一小时之内禁止输入，一小时之后可继续再输五次
+ function ShowCountDown(divname) { 
+	var now = new Date(); 
+	var endDate = localStorage.endTime; 
+	var leftTime=endDate-now.getTime(); 
+	var leftsecond = parseInt(leftTime/1000); 
+	var day1=Math.floor(leftsecond/(60*60*24)); 
+	var hour=Math.floor((leftsecond-day1*24*60*60)/3600); 
+	var minute=Math.floor((leftsecond-day1*24*60*60-hour*3600)/60); 
+	var second=Math.floor(leftsecond-day1*24*60*60-hour*3600-minute*60); 
+	var cc = document.getElementById(divname); 
+	cc.innerHTML = minute+"："+second; 
+	if(minute<10 && second>=10){
+		cc.innerHTML = "0"+minute+"："+second; 
+	}
+	if(minute>=10 && second<10){
+		cc.innerHTML = minute+"：0"+second; 
+	}
+	if(minute<10 && second<10){
+		cc.innerHTML = "0"+minute+"：0"+second; 
+	}
+	console.log(leftsecond);
+	if(leftsecond <= 0){
+		 window.clearInterval(timer);
+		 $(".mask").hide();
+		 localStorage.removeItem("endTime");
+		 num = 5;
+	}
+} 
+ 
+</script>
+</html>
